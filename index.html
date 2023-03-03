@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Timesheet</title>
+<meta charset="utf-8">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+	font-family: helvetica, verdana, sans-serif;
+	background-color: #cccccc;
+	color: #666666;
+	font-size: 0px;
+	line-height: 0px;
+	margin: 0px;
+	padding: 0px;
+}
+#page{
+	background-color: #ffffff;
+	width: 80%;
+	min-width: 400px;
+	margin: 0px auto;
+	padding: 30px;
+	box-sizing: border-box;
+}
+h1{
+	margin: 0px auto 16px;
+	padding: 0px 0px 16px;
+	border-bottom: 1px solid #cccccc;
+	font-size: 24px;
+	line-height: 24px;
+}
+.task{
+	text-align: center;
+	clear: both;
+	position: relative;
+	margin: 0px 0px 4px;
+}
+	#new_task{
+		display: none;
+	}
+	input, button{
+		font-size: 18px;
+		line-height: 24px;
+		-webkit-appearance: none;
+		border: none;
+		outline: none;
+		background: transparent;
+		padding: 0px;
+		margin: 0px;
+		display: inline-block;
+	}
+		.timer{
+			position: absolute;
+			top: 0px;
+			left: 0px;
+		}
+			.num{
+				font-size: 18px;
+				line-height: 24px;
+				float: left;
+				display: inline-block;
+				width: 24px;
+				text-align: center;
+			}
+			.btn_play{
+				float: left;
+				cursor: pointer;
+				width: 40px;
+				padding: 0px;
+				margin: 0px 0px;
+				background-color: #66ff66;
+				color: #ffffff;
+			}
+				.btn_play.playing{
+					background-color: #ff6666;
+				}
+				.btn_play:hover{
+					opacity: 0.8;
+				}
+			.time{
+				float: left;
+				background: #e0e0e0;
+				width: 86px;
+				text-align: center;
+			}
+		.description{
+			width: 100%;
+			padding: 0px 0px 0px 154px;
+			border-bottom: 1px solid #cccccc;
+			box-sizing: border-box;
+		}
+		.btn_delete{
+			display: inline-block;
+			cursor: pointer;
+			position: absolute;
+			top: 0px;
+			right: 0px;
+			font-size: 18px;
+			line-height: 24px;
+		}
+			.btn_delete:hover{
+				opacity: 0.8;
+			}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+	var t;
+	var c = 0;
+	var target;
+	
+	// create
+	$('#timesheet').on('keypress', '.description', function(){
+		if($(this).parent('.task').is(':last-child')){
+			$('#new_task .task').clone().appendTo('#timesheet');
+		}
+		renum();
+	});
+	
+	// delete
+	$('#timesheet').on('click', '.btn_delete', function(){
+		if($('#timesheet .task').length != 1){
+			$(this).parent('.task').remove();
+			renum();
+		}
+	});
+	
+	// renumber
+	function renum(){
+		$('#timesheet .task').each(function(ind){
+			$(this).attr('id', 'task_'+ind+1)
+			$(this).find('.num').html(ind+1);
+		});
+	}
+	
+	// play
+	$('#timesheet').on('click', '.btn_play', function(){
+		// find which 'time' is associated with play btn
+		target = $(this).siblings('.time');
+		c = target.data('raw');
+		// kill current timer
+		clearTimeout(t);
+		
+		// if toggled timer is off
+		if(target.data('status') == 'off'){
+			// turn off all timers
+			$('.time').data('status', 'off');
+			$('.btn_play').html('&rtrif;').removeClass('playing');
+			
+			// turn on selected timer
+			target.data('status', 'on');
+			target.siblings('.btn_play').html('&squf;').addClass('playing');
+			timer();
+		// if toggled timer is on
+		}else{
+			// turn off all timers
+			$('.time').data('status', 'off');
+			$('.btn_play').html('&rtrif;').removeClass('playing');
+		}
+	});
+	
+	// manual time update
+	$('#timesheet').on('change', '.time', function(){
+		$(this).data('raw', hmsToSecondsOnly($(this).val()));
+	});
+	
+	// timer
+	function timer(){
+		t = setTimeout(add, 1000);
+	}
+	function add(){
+		c++;
+		target.data('raw', c);
+		target.val(c.toString().toHHMMSS());
+		
+		timer();
+	}
+});
+String.prototype.toHHMMSS = function () {
+	var sec_num = parseInt(this, 10);
+	var hours   = Math.floor(sec_num / 3600);
+	var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+	var seconds = sec_num - (hours * 3600) - (minutes * 60);
+	
+	if (hours   < 10) {hours   = "0"+hours;}
+	if (minutes < 10) {minutes = "0"+minutes;}
+	if (seconds < 10) {seconds = "0"+seconds;}
+	return hours+':'+minutes+':'+seconds;
+}
+function hmsToSecondsOnly(str) {
+	var p = str.split(':');
+	var s = 0
+	var m = 1;
+		
+	while (p.length > 0) {
+		s += m * parseInt(p.pop(), 10);
+		m *= 60;
+	}
+	
+	return s;
+}
+</script>
+</head>
+<body>
+	<div id="page">
+		<h1>TimeSheetr // Build 8.10.16</h1>
+		<!-- timesheet -->
+		<div id="timesheet">
+			<div class="task" id="task_1">
+				<div class="timer">
+					<span class="num">1</span>
+					<button type="button" class="btn_play">&rtrif;</button>
+					<input type="text" class="time" value="00:00:00" data-raw="0" data-status="off" />
+				</div>
+				<input type="text" class="description" placeholder="Task Description" />
+				<span class="btn_delete">&cross;</span>
+			</div>
+		</div>
+		<!-- template -->
+		<div id="new_task">
+			<div class="task">
+				<div class="timer">
+					<span class="num">1</span>
+					<button type="button" class="btn_play">&rtrif;</button>
+					<input type="text" class="time" value="00:00:00" data-raw="0" data-status="off" />
+				</div>
+				<input type="text" class="description" />
+				<span class="btn_delete">&cross;</span>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
